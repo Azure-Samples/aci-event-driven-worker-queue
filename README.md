@@ -1,57 +1,36 @@
 # Project Name
 
-(short, 1-3 sentenced, description of the project)
+Azure Container Instances offers:
+1. No server management
+2. Pay for what you consume
+3. Secure multi-tenant applications
+
+Azure provides an avenue for elastic compute to satisfy an unsteady influx of work. Many real world scenarios face this issue such as Black Friday retail websites, tax season for financial auditors, or consumer applications going viral. Azure Container Instances offers the ability to create fast, custom sized containers to respond to any workload that has been containerized. Simply define your container group with a docker image to get started.
 
 ## Features
 
-This project framework provides the following features:
-
-* Feature 1
-* Feature 2
-* ...
+TBD
 
 ## Getting Started
 
 ### Prerequisites
 
-(ideally very short, if any)
-
-- OS
-- Library version
-- ...
+TBD
 
 ### Installation
 
-(ideally very short)
-
-- npm install [package name]
-- mvn install
-- ...
+TBD
 
 ### Quickstart
-(Add steps to get up and running quickly)
 
-1. git clone [repository clone url]
-2. cd [respository name]
-3. ...
-
+TBD
 
 ## Demo
 
-A demo app is included to show how to use the project.
-
-To run the demo, follow these steps:
-
-(Add steps to start up the demo)
-
-1.
-2.
-3.
+TBD
 
 ## Resources
 
-(Any additional resources or related projects)
+aka.ms/aci
 
-- Link to supporting information
-- Link to similar sample
-- ...
+aka.ms/aci/docs
