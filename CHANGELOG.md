@@ -1,13 +1,5 @@
 ## ACI Event Driven Worker Queue Changelog
 
 <a name="x.y.z"></a>
-# x.y.z (yyyy-mm-dd)
+# Initial commit (2018-04-16)
 
-*Features*
-* ...
-
-*Bug Fixes*
-* ...
-
-*Breaking Changes*
-* ...
