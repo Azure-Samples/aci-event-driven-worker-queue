@@ -1,0 +1,287 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "client_id": {
+            "type": "string"
+        },
+        "client_secret": {
+            "type": "string"
+        },
+        "tenant": {
+            "type": "string"
+        },
+        "webServerImage": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "serviceBusCreateQueueName": "createqueue",
+        "serviceBusDeleteQueueName": "deletequeue",
+        "storageAccountType": "Standard_LRS",
+        "storageAccountName": "[concat('store', uniqueString(resourceGroup().id))]",
+        "serviceBusNamespaceName": "[concat('servicebus',uniqueString(resourceGroup().id))]",
+        "serverFarmName": "[concat('hostplan',uniqueString(resourceGroup().id))]",
+        "functionAppName": "[concat('functionapp',uniqueString(resourceGroup().id))]",
+        "cosmosdbName": "[concat('cosmosdb',uniqueString(resourceGroup().id))]",
+        "sasResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('serviceBusNamespaceName'), 'RootManageSharedAccessKey')]",
+        "dnsNameLabel": "[concat('web-server', uniqueString(resourceGroup().id))]",
+        "fqdn": "[concat(variables('dnsNameLabel'),'.',toLower(resourceGroup().location),'.azurecontainer.io')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+              "name": "[variables('storageAccountType')]"
+            },
+            "kind": "Storage",
+            "properties": {
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "name": "[variables('serviceBusNamespaceName')]",
+            "type": "Microsoft.ServiceBus/namespaces",
+            "location": "[resourceGroup().location]",
+            "properties": {},
+            "resources": [
+                {
+                    "apiVersion": "2017-04-01",
+                    "name": "[variables('serviceBusCreateQueueName')]",
+                    "type": "Queues",
+                    "dependsOn": [
+                      "[concat('Microsoft.ServiceBus/namespaces/', variables('serviceBusNamespaceName'))]"
+                    ],
+                    "properties": {
+                    }
+                  },
+                  {
+                    "apiVersion": "2017-04-01",
+                    "name": "[variables('serviceBusDeleteQueueName')]",
+                    "type": "Queues",
+                    "dependsOn": [
+                      "[concat('Microsoft.ServiceBus/namespaces/', variables('serviceBusNamespaceName'))]"
+                    ],
+                    "properties": {
+                    }
+                  }                
+            ]
+        },
+        {
+            "name": "[variables('serverFarmName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2016-09-01",
+            "kind": "functionapp",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "properties": {},
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "kind": "functionapp",
+            "name": "[variables('functionAppName')]",
+            "apiVersion": "2016-08-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "enabled": true,
+                "hostNameSslStates": [
+                    {
+                        "name": "[concat(variables('functionAppName'),'.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "virtualIP": null,
+                        "thumbprint": null,
+                        "toUpdate": null,
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[concat(variables('functionAppName'),'.scm.azurewebsites.net')]",
+                        "sslState": "Disabled",
+                        "virtualIP": null,
+                        "thumbprint": null,
+                        "toUpdate": null,
+                        "hostType": "Repository"
+                    }
+                ],
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+                "reserved": false,
+                "siteConfig": {
+                    "nodeVersion": "6.5.0",
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageaccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')),'2017-06-01').keys[0].value))]"
+                        },
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageaccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')),'2017-06-01').keys[0].value))]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageaccountName'),';AccountKey=',concat(listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageaccountName')),'2017-06-01').keys[0].value))]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[variables('storageaccountName')]"
+                        },
+                        {
+                            "name": "subscription_id",
+                            "value": "[subscription().subscriptionId]"
+                        },
+                        {
+                            "name": "resourceGroup",
+                            "value": "[resourceGroup().name]"
+                        },
+                        {
+                            "name": "servicebus_connectionString",
+                            "value": "[listKeys(variables('sasResourceId'), '2015-08-01').primaryConnectionString]"
+                        },
+                        {
+                            "name": "client_id",
+                            "value": "[parameters('client_id')]"
+                        },
+                        {
+                            "name": "client_secret",
+                            "value": "[parameters('client_secret')]"
+                        },
+                        {
+                            "name": "tenant",
+                            "value": "[parameters('tenant')]"
+                        }
+                    ],
+                    "connectionStrings": [
+                        {
+                            "name": "CosmosDB",
+                            "connectionString": "[concat('mongodb://', variables('cosmosdbName'),':', listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosdbName')), '2015-04-08').primaryMasterKey, '@', variables('cosmosdbName'), '.documents.azure.com:10255/?replicaSet=globaldb')]",
+                            "type": "Custom"
+                        }
+                    ]
+                },
+                "scmSiteAlsoStopped": false,
+                "hostingEnvironmentProfile": null,
+                "clientAffinityEnabled": false,
+                "clientCertEnabled": false,
+                "hostNamesDisabled": false,
+                "containerSize": 1536,
+                "dailyMemoryTimeQuota": 0,
+                "cloningInfo": null
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosdbName'))]"
+            ],
+            "resources": []
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "kind": "MongoDB",
+            "name": "[variables('cosmosdbName')]",
+            "apiVersion": "2015-04-08",
+            "location": "[resourceGroup().location]",
+            "tags": {
+              "defaultExperience": "MongoDB"
+            },
+            "properties": {
+              "databaseAccountOfferType": "Standard"
+            },
+            "dependsOn": []
+          },
+          {
+            "name": "[variables('dnsNameLabel')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-02-01-preview",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosdbName'))]",
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('serviceBusNamespaceName'))]"    
+            ],
+            "tags": {
+                "fqdn": "[variables('fqdn')]"
+            },
+            "properties": {
+                "containers": [{
+                    "name": "[variables('dnsNameLabel')]",
+                    "properties": {
+                        "image": "[parameters('webServerImage')]",
+                        "resources": {
+                            "requests": {
+                                "cpu": 1,
+                                "memoryInGb": 1.5
+                            }
+                        },
+                        "ports": [{
+                            "port": 80
+                        }],
+                        "environmentVariables": [{
+                            "name": "AZURE_SUBSCRIPTION_ID",
+                            "value": "[subscription().subscriptionId]"
+                        }, {
+                            "name": "AZURE_CLIENT_ID",
+                            "value": "[parameters('client_id')]"
+                        }, {
+                            "name": "AZURE_CLIENT_SECRET",
+                            "value": "[parameters('client_secret')]"
+                        }, {
+                            "name": "AZURE_TENANT_ID",
+                            "value": "[parameters('tenant')]"
+                        }, {
+                            "name": "AZURE_RESOURCE_GROUP",
+                            "value": "[resourceGroup().name]"
+                        }, {
+                            "name": "COSMOS_CONNECTION_STRING",
+                            "value": "[concat('mongodb://', variables('cosmosdbName'),':', listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosdbName')), '2015-04-08').primaryMasterKey, '@', variables('cosmosdbName'), '.documents.azure.com:10255/?replicaSet=globaldb')]"
+                        }, {
+                            "name": "SERVICE_BUS_NAMESPACE",
+                            "value": "[variables('serviceBusNamespaceName')]"
+                        }, {
+                            "name": "SERVICE_BUS_SASKEY_NAME",
+                            "value": "RootManageSharedAccessKey"
+                        }, {
+                            "name": "SERVICE_BUS_SASKEY_VALUE",
+                            "value": "[listKeys(variables('sasResourceId'), '2015-08-01').primaryKey]"
+                        }, {
+                            "name": "SERVICE_BUS_CREATE_QUEUE",
+                            "value": "[variables('serviceBusCreateQueueName')]"
+                        }, {
+                            "name": "SERVICE_BUS_DELETE_QUEUE",
+                            "value": "[variables('serviceBusDeleteQueueName')]"
+                        }]
+                    }
+                }],
+                "osType": "Linux",
+                "restartPolicy": "OnFailure",
+                "ipAddress": {
+                    "type": "Public",
+                    "ports": [{
+                        "protocol": "tcp",
+                        "port": "80"
+                    }],
+                    "dnsNameLabel": "[variables('dnsNameLabel')]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "fqdn": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('dnsNameLabel'))).ipAddress.fqdn]"
+        },
+        "FunctionAppName": {
+            "type": "string",
+            "value": "[variables('functionAppName')]"
+        }
+    }
+}
