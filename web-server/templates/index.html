@@ -113,7 +113,7 @@
                                 <ul class="tabs">
                                     <li class="tab"><a class="active" href="#tab-content-cpu">CPU</a></li>
                                     <li class="tab"><a href="#tab-content-memory">Memory</a></li>
-                                    <li class="tab disabled"><a href="#tab-content-output">Output</a></li>
+                                    <li class="tab"><a href="#tab-content-output">Output</a></li>
                                 </ul>
                             </div>
                             <div id="tab-content-cpu" class="col s12">
@@ -123,7 +123,9 @@
                                 <canvas id="container-memory-chart" style="width:100%;height:400px;"></canvas>
                             </div>
                             <div id="tab-content-output" class="col s12">
-                                <p>The Output are currently not supported</p>
+                                <div class="card z-depth-0">
+                                    <p class="card-content" style="word-wrap: break-word;"></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -166,6 +168,7 @@
                             //Update current state
                             container_name = container_states[i].name
                             container_state = container_states[i].state
+                            container_output = container_states[i].output
 
                             if(dic[container_name])
                                 continue;
@@ -178,6 +181,9 @@
                             else{
                                 UpdateDefaultContainer(container_name, ConvertStateToPanel(container_state))
                                 current_state.set(container_name, ConvertStateToPanel(container_state))
+                            }
+                            if(container_output){
+                                $("#"+container_name).data("output", container_output);
                             }
                         }
                     },
@@ -222,10 +228,12 @@
             //Set up model with monitoring metrics for the individule ACI
             $("#container-wrapper").on('click', ".aci-instance", function (event) {
                 containerName = $(this).attr("id").replace("-modal", '')
-                
+
                 $(".aci-instance").removeClass("active");
                 $(this).addClass("active");
 
+                var output = $("#"+containerName).data("output");
+                $("#tab-content-output p").text(output?output:"No output");
                 $.get("/api/metrics/" + containerName, function (data) {
                     $('#loading').hide();
                     data = $.parseJSON(data);
