@@ -80,7 +80,8 @@ def current_state():
     for state in container_states:
         current_states.append({
             "name": state['name'],
-            "state": state['state']
+            "state": state['state'],
+            "output": state.get('output')
         })
 
     return json.dumps({"container_states": current_states})

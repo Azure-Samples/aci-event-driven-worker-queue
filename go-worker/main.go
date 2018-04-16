@@ -81,11 +81,10 @@ func main() {
 
 	//Perfom some hashing as work
 	stop := make(chan bool)
+	t := []byte(work)
 
 	go func() {
 		hash := md5.New()
-
-		t := []byte("test")
 		for {
 			select {
 			case <-stop:
@@ -103,6 +102,7 @@ func main() {
 	time.Sleep(time.Second * 5)
 	stop <- true
 
+	time.Sleep(time.Second * 2)
 	// Record finish work in the database
-	c.Update(bson.M{"name": containerName}, bson.M{"$set": bson.M{"state": "Done"}})
+	c.Update(bson.M{"name": containerName}, bson.M{"$set": bson.M{"state": "Done", "output": fmt.Sprintf("%x\n", t)}})
 }
