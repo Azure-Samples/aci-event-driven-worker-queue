@@ -25,6 +25,11 @@ var makeId = function() {
 
 
 module.exports = function(context, mySbMsg) {
+    if ( !mySbMsg || mySbMsg.length == 0 ){
+        context.log('JavaScript ServiceBus queue message is empty.')
+        mySbMsg = "empty string";
+    }
+
     context.log('JavaScript ServiceBus queue trigger function processed message', mySbMsg);
 
     msRestAzure.loginWithServicePrincipalSecret(clientId, secret, domain, function(err, credentials) {
@@ -38,7 +43,7 @@ module.exports = function(context, mySbMsg) {
                 environmentVariables: [
                     {   
                         name: "MESSAGE",
-                        value: mySbMsg 
+                        value: mySbMsg
                     },
                     {   
                         name: "CONTAINER_NAME",
@@ -72,12 +77,11 @@ module.exports = function(context, mySbMsg) {
 
         client.containerGroups.createOrUpdate(resourceGroupName, containerName, containerGroup)
             .then( (cgroup) => {
-                context.log(cgroup)
+                context.log(cgroup);
+                context.done();
             }).catch((err) => {
                 context.log(err);
                 return;
             });
     });
-
-    context.done();
 };
