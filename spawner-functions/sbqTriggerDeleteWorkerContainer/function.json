@@ -1,0 +1,13 @@
+{
+  "bindings": [
+    {
+      "name": "mySbMsg",
+      "type": "serviceBusTrigger",
+      "direction": "in",
+      "queueName": "deletequeue",
+      "connection": "servicebus_connectionString",
+      "accessRights": "Listen"
+    }
+  ],
+  "disabled": false
+}

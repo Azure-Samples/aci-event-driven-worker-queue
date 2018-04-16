@@ -1,3 +1,8 @@
+
+**/.env
+
+go-worker/vender/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -99,3 +104,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+#node_modules
+node_modules/
+
+.vscode/

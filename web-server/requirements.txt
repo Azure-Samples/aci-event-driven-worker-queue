@@ -1,0 +1,8 @@
+azure-common==1.1.8
+azure.servicebus
+azure.mgmt.monitor
+flask
+jsonify
+bson
+pymongo
+requests

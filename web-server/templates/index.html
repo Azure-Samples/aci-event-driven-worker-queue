@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>ACI Dashboard</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="/static/vendor/materialize/materialize.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        .card.aci-instance.active .card-title{
+            font-weight:normal;
+            color: black !important;
+        }
+        .card.aci-instance{
+            cursor:pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="black">
+        <div class="nav-wrapper">
+            <div class="container">
+            <a href="#" class="brand-logo">Dashboard - ACI Events</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <div class="card z-depth-0 white">
+                    <div class="card-content">
+                        <span class="card-title">Input</span>
+                        <div class="input-field">
+                            <label for="input-work">Add Work</label>
+                            <input id="input-work" type="text">
+                        </div>
+                        <a id="sumbit-work" href="#" class="waves-effect waves-light btn blue">Add To Queue</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                <div class="card z-depth-0 white">
+                    <div class="card-content">
+                        <span class="card-title">
+                            Workers
+                            <a id="sumbit-refresh" href="#" class="waves-effect waves-light btn red">Clear Database</a>
+                        </span>
+                        <div id="container-wrapper" class="row">
+                            <!--<div class="col s12 m6 l4">
+                                <div class="card blue">
+                                    <div class="card-content">
+                                        <span class="card-title white-text">Name of the container</span>
+                                    </div>        
+                                    <div class="card-action blue lighten-1">
+                                        <a href="#" class="white-text">Output</a>
+                                        <a href="#" class="white-text">Analysis</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col s12 m6 l4">
+                                <div class="card green">
+                                    <div class="card-content">
+                                        <span class="card-title white-text">Name of the container</span>
+                                    </div>        
+                                    <div class="card-action green lighten-1">
+                                        <a href="#" class="white-text">Results</a>
+                                        <a href="#" class="white-text">Analysis</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col s12 m6 l4">
+                                <div class="card orange">
+                                    <div class="card-content">
+                                        <span class="card-title white-text">Name of the container</span>
+                                    </div>        
+                                    <div class="card-action orange lighten-1">
+                                        <a href="#" class="white-text">Results</a>
+                                        <a href="#" class="white-text">Analysis</a>
+                                    </div>
+                                </div>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                <div class="card z-depth-0 white">
+                    <div class="card-content">
+                        <span class="card-title">
+                            Details
+                        </span>
+                        <div class="row" style="min-height:448px;">
+                            <div class="col s12">
+                                <ul class="tabs">
+                                    <li class="tab"><a class="active" href="#tab-content-cpu">CPU</a></li>
+                                    <li class="tab"><a href="#tab-content-memory">Memory</a></li>
+                                    <li class="tab"><a href="#tab-content-output">Output</a></li>
+                                </ul>
+                            </div>
+                            <div id="tab-content-cpu" class="col s12">
+                                <canvas id="container-cpu-chart" style="width:100%;height:400px;"></canvas>
+                            </div>
+                            <div id="tab-content-memory" class="col s12">
+                                <canvas id="container-memory-chart" style="width:100%;height:400px;"></canvas>
+                            </div>
+                            <div id="tab-content-output" class="col s12">
+                                <div class="card z-depth-0">
+                                    <p class="card-content" style="word-wrap: break-word;"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="/static/vendor/jquery/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="/static/vendor/materialize/materialize.min.js"></script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+
+    <script>
+        function clearCanvas(id){
+            var c = document.getElementById(id);
+            var cxt = c.getContext("2d");
+            c.width = Math.round($(".tabs").width());
+            c.height = 400;
+        }
+
+
+        $(function () {
+            $(".tabs").tabs();
+            //Save the current state of container group objects in the DOM
+            var current_state = new Map()
+
+            function loadData(){
+                $.ajax({
+                    url:"/currentstate",
+                    success:function (data) {
+                        container_states = $.parseJSON(data)['container_states'];
+                        var dic = new Map();
+                        for (var i = 0; i < container_states.length; i++) {
+                            
+                            //Update current state
+                            container_name = container_states[i].name
+                            container_state = container_states[i].state
+                            container_output = container_states[i].output
+
+                            if(dic[container_name])
+                                continue;
+                            dic[container_name] = true;
+
+                            if (current_state.has(container_name)){
+                                var state = current_state.get(container_name);
+                                $("#"+container_name + " ." + state).removeClass(state).addClass(ConvertStateToPanel(container_state))
+                            }
+                            else{
+                                UpdateDefaultContainer(container_name, ConvertStateToPanel(container_state))
+                                current_state.set(container_name, ConvertStateToPanel(container_state))
+                            }
+                            if(container_output){
+                                $("#"+container_name).data("output", container_output);
+                            }
+                        }
+                    },
+                    complete:function(){
+                        setTimeout(loadData,1000);
+                    }
+                });
+            }
+            loadData();
+
+            // Add new work to the service bus queue
+            $("#sumbit-work").click(function(event){
+                var text = $("#input-work").val()
+                $("#input-work").val('')
+                
+                $.ajax({
+                    type: "POST",
+                    url: "/sendwork",
+                    // The key needs to match your method's input parameter (case-sensitive).
+                    data: JSON.stringify({ "work": text }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    failure: function (errMsg) {
+                        alert("Failed to Add to Queue");
+                    }
+                });
+
+                //Set the default container to wait for InProgress to start
+                $("#container-wrapper").append(GetDefaultContainerBox())
+            })
+
+            // Clear the current state from Cosmos
+            $("#sumbit-refresh").click(function(event){
+                $.ajax({
+                    type: "PUT",
+                    url: "/clear"
+                })
+                $("#container-wrapper").empty()
+            })
+        
+
+            //Set up model with monitoring metrics for the individule ACI
+            $("#container-wrapper").on('click', ".aci-instance", function (event) {
+                containerName = $(this).attr("id").replace("-modal", '')
+
+                $(".aci-instance").removeClass("active");
+                $(this).addClass("active");
+
+                var output = $("#"+containerName).data("output");
+                $("#tab-content-output p").text(output?output:"No output");
+                $.get("/api/metrics/" + containerName, function (data) {
+                    $('#loading').hide();
+                    data = $.parseJSON(data);
+                    DrawMetricChart(data.chartData, containerName);
+                })
+                                
+                clearCanvas("container-cpu-chart");
+                clearCanvas("container-memory-chart");
+                var emptyChartData = {"seriesLabels":[["00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00"],["00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00","00:00:00"]],"labels":["CPU Usage","Memory Usage"],"dataPoints":[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]};
+                DrawMetricChart(emptyChartData,containerName);
+            });
+
+        });
+
+        // When a container state is initalize, Change the pending box to an actual
+        //  container group box with the correct state.
+        function UpdateDefaultContainer(containerName, panelState){
+            //No default container around, just make a standard one
+            if ($(".default-container").length == 0){
+                $("#container-wrapper").append(GetContainerBox(containerName, panelState))
+                return
+            }
+            
+            var defaultContainer = $(".default-container").first()
+            
+            defaultContainer.removeClass("default-container")
+            
+            //Replace the default with the known values
+            defaultContainer.attr('id', containerName)
+            defaultContainer.find(".aci-instance").attr('id', containerName + "-modal")
+            defaultContainer.find(".name-place").text(containerName)
+            defaultContainer.find(".orange").removeClass("orange").addClass(panelState)
+            
+        }
+
+        // Convert from the container group state in the DB to the css class
+        function ConvertStateToPanel(state){
+            switch (state) {
+                case "InProgress":
+                    return "blue";
+                case "Done":
+                    return "green";
+                default:
+                    return "orange";
+            }
+        }
+
+        // Draw the chart with the returned chart data
+        function DrawMetricChart(chartData, containerName){
+            var ctx = document.getElementById("container-cpu-chart").getContext('2d');
+            var containerDetailsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.seriesLabels[0],
+                    datasets: [{
+                        label: chartData.labels[0],
+                        data: chartData.dataPoints[0],
+                        backgroundColor: 'rgba(54, 162, 235, 1)',
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    title: {
+                        display: true,
+                        text: containerName + " - CPU Metrics"
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero:true
+                            },
+                            position:'left'
+                        }]
+                    }
+                }
+            });
+            var ctx = document.getElementById("container-memory-chart").getContext('2d');
+            var containerDetailsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.seriesLabels[1],
+                    datasets: [{
+                        label: chartData.labels[1],
+                        data: chartData.dataPoints[1],
+                        backgroundColor: 'rgba(242, 78, 78, 1)',
+                        borderColor: 'rgba(242, 78, 78, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    title: {
+                        display: true,
+                        text: containerName + " - Memory Metrics"
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero:true
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+
+        // The default container just says pending, since a container group takes around 7
+        //    seconds to up come, the pending container is a nice placeholder to show that
+        //    things are working. This will be replaced when the container state is updated.
+        function GetDefaultContainerBox() {
+                return `<div class="col s12 m6 l4 default-container">
+                            <div class="card orange aci-instance">
+                                <div class="card-content">
+                                    <span class="card-title white-text name-place">Pending</span>
+                                </div>        
+                            </div>
+                        </div>`
+            }
+
+        // Create an actual container group card with actual values. 
+        function GetContainerBox(name, panel_state){
+            return `<div id="`+ name +`" class="col s12 m6 l4">
+                        <div id="` + name + `-modal" class="card ` + panel_state + ` aci-instance">
+                            <div class="card-content">
+                                <span class="card-title white-text name-place">`+ name +`</span>
+                            </div>
+                        </div>
+                    </div>`;
+        }
+    </script>
+</body>
+
+</html>
