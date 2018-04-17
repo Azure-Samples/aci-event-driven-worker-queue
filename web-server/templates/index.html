@@ -151,7 +151,6 @@
             c.height = 400;
         }
 
-
         $(function () {
             $(".tabs").tabs();
             //Save the current state of container group objects in the DOM
@@ -186,6 +185,13 @@
                                 $("#"+container_name).data("output", container_output);
                             }
                         }
+                        var id = $(".aci-instance.active").attr("id");
+                        if(id){
+                            var containerName = id.replace("-modal", '')
+                            var output = $("#"+containerName).data("output");
+                            $("#tab-content-output p").text(output?output:"No output");
+                        }
+                        if()
                     },
                     complete:function(){
                         setTimeout(loadData,1000);
@@ -227,7 +233,10 @@
 
             //Set up model with monitoring metrics for the individule ACI
             $("#container-wrapper").on('click', ".aci-instance", function (event) {
-                containerName = $(this).attr("id").replace("-modal", '')
+                var id = $(this).attr("id");
+                if(!id)
+                    return;
+                var containerName = id.replace("-modal", '')
 
                 $(".aci-instance").removeClass("active");
                 $(this).addClass("active");
