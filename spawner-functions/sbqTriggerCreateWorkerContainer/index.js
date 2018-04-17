@@ -12,7 +12,7 @@ var clientId = process.env.client_id,
     resourceGroupName = process.env.resourceGroup;
 
 const baseName = ["anders", "wenjun", "robbie", "robin", "allen", "tony", "xiaofeng", "tingting", "harry", "chen"];
-const IMAGE = "pskreter/worker-container:latest";
+const IMAGE = "chadliuxc/go-worker:latest";
 
 var makeId = function() {
     let text = '';
@@ -81,7 +81,7 @@ module.exports = function(context, mySbMsg) {
                 context.done();
             }).catch((err) => {
                 context.log(err);
-                return;
+                context.done(err);
             });
     });
 };
