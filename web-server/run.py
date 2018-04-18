@@ -56,8 +56,8 @@ def sendwork():
 
     try:
         bus_service.send_queue_message(queueConf['queue_name'], Message({"name":name,"input":work}))
-    except expression as e:
-        db.containerstate.update({"name":name},{"state":"Error","message":traceback.format_exc()})
+    except Exception, e:
+        db.containerstate.update({"name":name},{"$set":{"state":"Error","message":traceback.format_exc()}})
     
     return SUCCESS
 

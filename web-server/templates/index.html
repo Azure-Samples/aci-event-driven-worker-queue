@@ -173,14 +173,16 @@
                                 continue;
                             dic[container_name] = true;
 
+                            var stateClass = ConvertStateToPanel(container_state);
+
                             if (current_state.has(container_name)){
                                 var state = current_state.get(container_name);
-                                $("#"+container_name + " ." + state).removeClass(state).addClass(ConvertStateToPanel(container_state))
+                                $("#"+container_name + " ." + state).removeClass(state).addClass(stateClass);
                             }
                             else{
-                                UpdateDefaultContainer(container_name, ConvertStateToPanel(container_state))
-                                current_state.set(container_name, ConvertStateToPanel(container_state))
+                                UpdateDefaultContainer(container_name, stateClass)
                             }
+                            current_state.set(container_name,stateClass);
                             if(container_output){
                                 $("#"+container_name).data("output", container_output);
                             }
@@ -189,7 +191,7 @@
                         if(id){
                             var containerName = id.replace("-modal", '')
                             var output = $("#"+containerName).data("output");
-                            $("#tab-content-output p").text(output?output:"No output");
+                            $("#tab-content-output p").html(output?output.replace(/\n/g,"<br/>"):"No output");
                         }
                     },
                     complete:function(){
@@ -240,8 +242,8 @@
                 $(this).addClass("active");
 
                 var output = $("#"+containerName).data("output");
-                $("#tab-content-output p").text(output?output:"No output");
-                if(!$(this).hasClass("no-chart")){
+                $("#tab-content-output p").html(output?output.replace(/\n/g,"<br/>"):"No output");
+                if($(this).hasClass("blue") || $(this).hasClass("green")){
                     $.get("/api/metrics/" + containerName, function (data) {
                         $('#loading').hide();
                         data = $.parseJSON(data);
@@ -286,9 +288,9 @@
                 case "Done":
                     return "green";
                 case "Error":
-                    return "red no-chart";
+                    return "red";
                 default:
-                    return "orange no-chart";
+                    return "orange";
             }
         }
 
