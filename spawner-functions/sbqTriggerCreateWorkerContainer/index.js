@@ -16,7 +16,7 @@ var db_pwd = db_connection.slice(db_connection.indexOf(':',10) + 1, db_connectio
 var db_uri = 'mongodb://' + db_connection.slice(db_connection.indexOf('@')+1) + '&ssl=true';
 
 const db_name = "containerstate";
-const IMAGE = "chadliuxc/go-worker:latest";
+const IMAGE = "hubertsui/go-worker:latest";
 const MongoClient = require('mongodb').MongoClient;
 
 module.exports = function(context, mySbMsg) {
@@ -59,7 +59,7 @@ module.exports = function(context, mySbMsg) {
                     },
                     {   
                         name: "DATABASE_URI",
-                        value: db_uri
+                        value: db_connection
                 }],
                 image: IMAGE,
                 ports: [
@@ -89,7 +89,8 @@ module.exports = function(context, mySbMsg) {
                 context.log(cgroup);
                 context.done();
             }).catch((err) => {
-                MongoClient.connect(db_url, { auth:{ user: db_user , password: db_pwd }}, function(dbError, client) {
+                context.log('created container error', err);
+                MongoClient.connect(db_uri, { auth:{ user: db_user , password: db_pwd }}, function(dbError, client) {
                     if (dbError){
                         context.log(dbError);
                         context.done(err);
@@ -100,7 +101,7 @@ module.exports = function(context, mySbMsg) {
 
                     let db = client.db(db_name);
                     let col = db.collection(db_name);
-                    col.updateMany({name: containerName }, {$set: { state: "Error" }}, function(dbUpdateError, r){
+                    col.updateMany({name: containerName }, {$set: { state: "Error", message: JSON.stringify(err) }}, function(dbUpdateError, r){
                         if (dbUpdateError){
                             context.log(dbUpdateError);
                         }
