@@ -13,50 +13,53 @@
 
 1. Clone the repo.
    ```console
-   git clone https://github.com/samkreter/event-driven-aci.git
+   git clone https://github.com/Azure-Samples/aci-event-driven-worker-queue.git
 
-   cd event-driven-aci
+   cd aci-event-driven-worker-queue
+   ```
+2. Open and login to [Azure Cloud Shell](shell.azure.com).
+
+3. Create resource group.
+   ```console
+    az group create -l westus -n aci-event-driven
    ```
 
-2. Create resource group.
+4. Create a service principal.
    ```console
-    az group create -l westus -n <resource group name>
-   ```
-
-2. Create service principal.
-   ```console
-    az ad sp create-for-rbac -n <resource group name> --role contributor
+    az ad sp create-for-rbac -n aci-event-driven --role contributor
     ```
     Output sample:
     ```
     #{
     #  "appId": "fb7c4111-2144-4489-8fd9-XXXXXXXXX",
-    #  "displayName": "msazure-aciaks-demo",
-    #  "name": "http://msazure-aciaks-demo",
+    #  "displayName": "aci-event-driven",
+    #  "name": "http://aci-event-driven",
     #  "password": "0fa91eda-261e-47ad-bb65-XXXXXXXX",
     #  "tenant": "3dad2b09-9e66-4eb8-9bef-XXXXXXX"
     #}
     ```
 
-3. Update the **azuredeploy.parameters.json** in the folder **arm** with the service principal credential created above.
+5. Cd into the `arm` directory and update the `azuredeploy.parameters.json` in the folder `arm` with the service principal credential created above (appId, password, tenant).
 
-4. Deploy the Azure resources with the ARM template.
+6. Deploy the Azure resources with the ARM template. This will take a few minutes.
    ```console
-    cd arm
-    
-    az group deployment create --template-file azuredeploy.json --parameters @azuredeploy.parameters.json -g <resource group name>
-    ```
+    az group deployment create --template-file azuredeploy.json --parameters @azuredeploy.parameters.json -g aci-event-driven
+   ```
     >Note: The output **fqdn** is the URL of the ACI dashboard.
 
-4. Download NPM packages.
+7. Download NPM packages.
    ```console
     cd ../spawner-functions
 
     npm install
-
-5. Compress the files inside the **spawner-functions** folder as a .zip file.
-
-6. Deploy the .zip file to the Azure function.
+    ```
+8. Compress the files inside the `spawner-functions` folder as a .zip file.
    ```console
-    az functionapp deployment source config-zip  -g <resource group name> -n <app_name> --src <zip_file>
+   cd ..
+   zip -r spawner-functions-compressed.zip spawner-functions
+   ```
+
+9. Deploy the .zip file to Azure Functions.
+   ```console
+    az functionapp deployment source config-zip  -g aci-event-driven -n <function-app-name> --src spawner-functions-compressed.zip
    ```
