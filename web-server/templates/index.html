@@ -236,17 +236,18 @@
                 if(!id)
                     return;
                 var containerName = id.replace("-modal", '')
-
                 $(".aci-instance").removeClass("active");
                 $(this).addClass("active");
 
                 var output = $("#"+containerName).data("output");
                 $("#tab-content-output p").text(output?output:"No output");
-                $.get("/api/metrics/" + containerName, function (data) {
-                    $('#loading').hide();
-                    data = $.parseJSON(data);
-                    DrawMetricChart(data.chartData, containerName);
-                })
+                if(!$(this).hasClass("no-chart")){
+                    $.get("/api/metrics/" + containerName, function (data) {
+                        $('#loading').hide();
+                        data = $.parseJSON(data);
+                        DrawMetricChart(data.chartData, containerName);
+                    })
+                }
                                 
                 clearCanvas("container-cpu-chart");
                 clearCanvas("container-memory-chart");
@@ -284,8 +285,10 @@
                     return "blue";
                 case "Done":
                     return "green";
+                case "Error":
+                    return "red no-chart";
                 default:
-                    return "orange";
+                    return "orange no-chart";
             }
         }
 
