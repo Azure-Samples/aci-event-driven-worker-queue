@@ -9,6 +9,8 @@ import sys
 from pymongo import MongoClient
 from bson.json_util import dumps
 import requests
+import random
+import traceback
 
 
 # TODO: Use Azure's sentiment analysis tool to perform everything
@@ -46,12 +48,30 @@ def index():
 @app.route('/sendwork', methods=['POST'])
 def sendwork():
     work = request.get_json()['work']
+    name = _getRandomName()
+
+    db.containerstate.insert({"name":name, "state":"Pending"})
 
     print("Creating job with work: ", work)
 
-    bus_service.send_queue_message(queueConf['queue_name'], Message(work))
+    try:
+        bus_service.send_queue_message(queueConf['queue_name'], Message({"name":name,"input":work}))
+    except Exception, e:
+        db.containerstate.update({"name":name},{"$set":{"state":"Error","message":traceback.format_exc()}})
+    
     return SUCCESS
 
+def _getRandomName():
+    baseName = ["anders", "wenjun", "robbie", "robin", "allen", "tony", "xiaofeng", "tingting", "harry", "chen"]
+    length = len(baseName)
+    name = baseName[int(random.random() * length)]
+
+    baseSuffix = "abcdefghijklmnopqrstuvwxyz0123456789"
+    length = len(baseSuffix)
+    suffix = "-"
+    for i in range(5):
+        suffix += baseSuffix[int(random.random() * length)]
+    return name + suffix
 
 # Clear the database of the current state
 @app.route('/clear', methods=['PUT'])
@@ -77,11 +97,15 @@ def current_state():
     current_states = []
 
     #Convert to list of state objects
-    for state in container_states:
+    for item in container_states:
+        state = item.get('state')
+        output = item.get('output')
+        if state == "Error":
+            output = item.get('message')
         current_states.append({
-            "name": state['name'],
-            "state": state['state'],
-            "output": state.get('output')
+            "name": item.get('name'),
+            "state": state,
+            "output": output
         })
 
     return json.dumps({"container_states": current_states})

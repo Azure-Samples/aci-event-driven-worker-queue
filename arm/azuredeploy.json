@@ -79,10 +79,10 @@
             "tags": {},
             "properties": {},
             "sku": {
-                "name": "Y1",
-                "tier": "Dynamic",
-                "size": "Y1",
-                "family": "Y",
+                "name": "B1",
+                "tier": "Basic",
+                "size": "B1",
+                "family": "B",
                 "capacity": 0
             }
         },
@@ -90,33 +90,16 @@
             "type": "Microsoft.Web/sites",
             "kind": "functionapp",
             "name": "[variables('functionAppName')]",
-            "apiVersion": "2016-08-01",
+            "apiVersion": "2015-08-01",
             "location": "[resourceGroup().location]",
             "scale": null,
             "properties": {
                 "enabled": true,
-                "hostNameSslStates": [
-                    {
-                        "name": "[concat(variables('functionAppName'),'.azurewebsites.net')]",
-                        "sslState": "Disabled",
-                        "virtualIP": null,
-                        "thumbprint": null,
-                        "toUpdate": null,
-                        "hostType": "Standard"
-                    },
-                    {
-                        "name": "[concat(variables('functionAppName'),'.scm.azurewebsites.net')]",
-                        "sslState": "Disabled",
-                        "virtualIP": null,
-                        "thumbprint": null,
-                        "toUpdate": null,
-                        "hostType": "Repository"
-                    }
-                ],
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
                 "reserved": false,
                 "siteConfig": {
                     "nodeVersion": "6.5.0",
+                    "AlwaysOn": true,
                     "appSettings": [
                         {
                             "name": "AzureWebJobsStorage",

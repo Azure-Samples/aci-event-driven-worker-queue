@@ -65,10 +65,7 @@ func main() {
 	log.Println("Adding Recored to Databases")
 
 	//Record container started the work
-	err = c.Insert(&State{
-		Name:  containerName,
-		State: "InProgress",
-	})
+	err = c.Update(bson.M{"name": containerName}, bson.M{"$set": bson.M{"state": "InProgress"}})
 	if err != nil {
 		log.Fatal(err)
 	}

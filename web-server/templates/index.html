@@ -151,7 +151,6 @@
             c.height = 400;
         }
 
-
         $(function () {
             $(".tabs").tabs();
             //Save the current state of container group objects in the DOM
@@ -174,17 +173,25 @@
                                 continue;
                             dic[container_name] = true;
 
+                            var stateClass = ConvertStateToPanel(container_state);
+
                             if (current_state.has(container_name)){
                                 var state = current_state.get(container_name);
-                                $("#"+container_name + " ." + state).removeClass(state).addClass(ConvertStateToPanel(container_state))
+                                $("#"+container_name + " ." + state).removeClass(state).addClass(stateClass);
                             }
                             else{
-                                UpdateDefaultContainer(container_name, ConvertStateToPanel(container_state))
-                                current_state.set(container_name, ConvertStateToPanel(container_state))
+                                UpdateDefaultContainer(container_name, stateClass)
                             }
+                            current_state.set(container_name,stateClass);
                             if(container_output){
                                 $("#"+container_name).data("output", container_output);
                             }
+                        }
+                        var id = $(".aci-instance.active").attr("id");
+                        if(id){
+                            var containerName = id.replace("-modal", '')
+                            var output = $("#"+containerName).data("output");
+                            $("#tab-content-output p").html(output?output.replace(/\n/g,"<br/>"):"No output");
                         }
                     },
                     complete:function(){
@@ -227,18 +234,22 @@
 
             //Set up model with monitoring metrics for the individule ACI
             $("#container-wrapper").on('click', ".aci-instance", function (event) {
-                containerName = $(this).attr("id").replace("-modal", '')
-
+                var id = $(this).attr("id");
+                if(!id)
+                    return;
+                var containerName = id.replace("-modal", '')
                 $(".aci-instance").removeClass("active");
                 $(this).addClass("active");
 
                 var output = $("#"+containerName).data("output");
-                $("#tab-content-output p").text(output?output:"No output");
-                $.get("/api/metrics/" + containerName, function (data) {
-                    $('#loading').hide();
-                    data = $.parseJSON(data);
-                    DrawMetricChart(data.chartData, containerName);
-                })
+                $("#tab-content-output p").html(output?output.replace(/\n/g,"<br/>"):"No output");
+                if($(this).hasClass("blue") || $(this).hasClass("green")){
+                    $.get("/api/metrics/" + containerName, function (data) {
+                        $('#loading').hide();
+                        data = $.parseJSON(data);
+                        DrawMetricChart(data.chartData, containerName);
+                    })
+                }
                                 
                 clearCanvas("container-cpu-chart");
                 clearCanvas("container-memory-chart");
@@ -276,6 +287,8 @@
                     return "blue";
                 case "Done":
                     return "green";
+                case "Error":
+                    return "red";
                 default:
                     return "orange";
             }
