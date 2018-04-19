@@ -30,13 +30,13 @@
     ```
     Output sample:
     ```
-    #{
-    #  "appId": "fb7c4111-2144-4489-8fd9-XXXXXXXXX",
-    #  "displayName": "aci-event-driven",
-    #  "name": "http://aci-event-driven",
-    #  "password": "0fa91eda-261e-47ad-bb65-XXXXXXXX",
-    #  "tenant": "3dad2b09-9e66-4eb8-9bef-XXXXXXX"
-    #}
+    {
+      "appId": "fb7c4111-2144-4489-8fd9-XXXXXXXXX",
+      "displayName": "aci-event-driven",
+      "name": "http://aci-event-driven",
+      "password": "0fa91eda-261e-47ad-bb65-XXXXXXXX",
+      "tenant": "3dad2b09-9e66-4eb8-9bef-XXXXXXX"
+    }
     ```
 
 5. Cd into the `arm` directory and update the `azuredeploy.parameters.json` in the folder `arm` with the service principal credential created above (appId, password, tenant).
@@ -45,7 +45,20 @@
    ```console
     az group deployment create --template-file azuredeploy.json --parameters @azuredeploy.parameters.json -g aci-event-driven
    ```
-    >Note: The output **fqdn** is the URL of the ACI dashboard.
+     Output sample
+    ```
+    "outputs": {
+      "fqdn": {
+        "type": "String",
+        "value": "web-servertmaalsmhtzqta.westus.azurecontainer.io"
+      },
+      "functionAppName": {
+        "type": "String",
+        "value": "functionapptmaalsmhtzqta"
+      }
+    }
+    ```
+    > Note: The output `fqdn` is the URL of the ACI dashboard, while the `functionAppName` is the new name of the Azure function which will be used in the step later.
 
 7. Download NPM packages.
    ```console
@@ -62,4 +75,13 @@
 9. Deploy the .zip file to Azure Functions.
    ```console
     az functionapp deployment source config-zip  -g aci-event-driven -n <function-app-name> --src spawner-functions-compressed.zip
+   ```
+   > Note: The `<function-app-name>` can be found in the output of ARM template deployment previously.
+
+
+## Known Issues
+
+1. During the .zip deployment for the Azure function, the error **Connection aborted** might occur sometimes, to workaround that, you could run the command below, and then re-deploy the Azure function minutes later when the function app is started.
+   ```console
+   az functionapp restart -g aci-event-driven -n <function-app-name>
    ```
