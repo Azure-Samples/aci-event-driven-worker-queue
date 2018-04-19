@@ -58,7 +58,7 @@
       }
     }
     ```
-    > Note: The output `fqdn` is the URL of the ACI dashboard, while the `functionAppName` is the new name of the Azure function which will be used in the step later.
+    > Note: The output `fqdn` is the URL of the ACI dashboard, while the `functionAppName` is the name of the Azure function which will be used in the step later.
 
 7. Download NPM packages.
    ```console
