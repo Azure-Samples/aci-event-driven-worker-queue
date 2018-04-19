@@ -8,6 +8,41 @@
 
 3. Spawner-functions: This consists of two functions. One is watching a queue to create aci instances and another is watching a queue to delete aci instances. 
 
+## Setup Docker Images
+
+Follow the steps below if you want to build your own docker images.
+
+1. Setup `web-server` image
+   - Build image.
+     ```console
+     cd web-server
+     docker build -t <dockerid>/web-server:latest .
+     ```
+   - Push image to Docker Hub.
+     ```console
+     docker push <dockerid>/web-server:latest
+     ```
+   - Open the file [azuredeploy.parameters.json](arm/azuredeploy.parameters.json) in `arm` folder, and update the value of the parameter `webServerImage` to point to the new image.
+     ```javascript
+     "webServerImage": {
+         "value": "<dockerid>/web-server"
+     }
+     ```
+
+1. Setup `go-worker` image
+   - Build image
+     ```console
+     cd ../go-worker
+     docker build -t <dockerid>/go-worker:latest .
+     ```
+   - Upload image to repository
+     ```console
+     docker push <dockerid>/go-worker:latest
+     ```
+   - Open the file [index.js](spawner-functions/sbqTriggerCreateWorkerContainer/index.js) in `spawner-functions/sbqTriggerCreateWorkerContainer` folder, and update this line to point to the new image.
+     ```javascript
+     const IMAGE = "<dockerid>/go-worker:latest";
+     ```
 
 ## Deployment Steps
 
