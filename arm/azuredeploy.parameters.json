@@ -13,6 +13,12 @@
         },
         "webServerImage": {
             "value": "hubertsui/web-server"
+        },
+        "functionAppName": {
+            "type": "acidemofunctionapp"
+        },
+        "dnsNameLabel": {
+            "type": "acidemowebserver"
         }
     }
   }

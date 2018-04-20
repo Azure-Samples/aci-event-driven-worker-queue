@@ -74,7 +74,7 @@ Follow the steps below if you want to build your own docker images.
     }
     ```
 
-5. Cd into the `arm` directory and update the `azuredeploy.parameters.json` in the folder `arm` with the service principal credential created above (appId, password, tenant).
+5. Cd into the `arm` directory and update the `azuredeploy.parameters.json` in the folder `arm` with the service principal credential created above (appId, password, tenant), and assign an unique name for the parameters `functionAppName` and `dnsNameLabel` (for the website).
 
 6. Deploy the Azure resources with the ARM template. This will take a few minutes.
    ```console
@@ -86,14 +86,10 @@ Follow the steps below if you want to build your own docker images.
       "fqdn": {
         "type": "String",
         "value": "web-servertmaalsmhtzqta.westus.azurecontainer.io"
-      },
-      "functionAppName": {
-        "type": "String",
-        "value": "functionapptmaalsmhtzqta"
       }
     }
     ```
-    > Note: The output `fqdn` is the URL of the ACI dashboard, while the `functionAppName` is the name of the Azure function which will be used in the step later.
+    > Note: The output `fqdn` is the URL of the ACI dashboard.
 
 7. Download NPM packages.
    ```console
@@ -111,7 +107,7 @@ Follow the steps below if you want to build your own docker images.
    ```console
     az functionapp deployment source config-zip  -g aci-event-driven -n <function-app-name> --src spawner-functions-compressed.zip
    ```
-   > Note: The `<function-app-name>` can be found in the output of ARM template deployment previously.
+   > Note: The `<function-app-name>` is the `functionAppName` parameter you used for ARM template deployment previously.
 
 
 ## Known Issues

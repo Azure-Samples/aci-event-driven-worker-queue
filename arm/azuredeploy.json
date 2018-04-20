@@ -13,6 +13,12 @@
         },
         "webServerImage": {
             "type": "string"
+        },
+        "functionAppName": {
+            "type": "string"
+        },
+        "dnsNameLabel": {
+            "type": "string"
         }
     },
     "variables": {
@@ -22,11 +28,9 @@
         "storageAccountName": "[concat('store', uniqueString(resourceGroup().id))]",
         "serviceBusNamespaceName": "[concat('servicebus',uniqueString(resourceGroup().id))]",
         "serverFarmName": "[concat('hostplan',uniqueString(resourceGroup().id))]",
-        "functionAppName": "[concat('functionapp',uniqueString(resourceGroup().id))]",
         "cosmosdbName": "[concat('cosmosdb',uniqueString(resourceGroup().id))]",
         "sasResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('serviceBusNamespaceName'), 'RootManageSharedAccessKey')]",
-        "dnsNameLabel": "[concat('web-server', uniqueString(resourceGroup().id))]",
-        "fqdn": "[concat(variables('dnsNameLabel'),'.',toLower(resourceGroup().location),'.azurecontainer.io')]"
+        "fqdn": "[concat(parameters('dnsNameLabel'),'.',toLower(resourceGroup().location),'.azurecontainer.io')]"
     },
     "resources": [
         {
@@ -89,7 +93,7 @@
         {
             "type": "Microsoft.Web/sites",
             "kind": "functionapp",
-            "name": "[variables('functionAppName')]",
+            "name": "[parameters('functionAppName')]",
             "apiVersion": "2015-08-01",
             "location": "[resourceGroup().location]",
             "scale": null,
@@ -181,7 +185,7 @@
             "dependsOn": []
           },
           {
-            "name": "[variables('dnsNameLabel')]",
+            "name": "[parameters('dnsNameLabel')]",
             "type": "Microsoft.ContainerInstance/containerGroups",
             "apiVersion": "2018-02-01-preview",
             "location": "[resourceGroup().location]",
@@ -196,7 +200,7 @@
             },
             "properties": {
                 "containers": [{
-                    "name": "[variables('dnsNameLabel')]",
+                    "name": "[parameters('dnsNameLabel')]",
                     "properties": {
                         "image": "[parameters('webServerImage')]",
                         "resources": {
@@ -252,7 +256,7 @@
                         "protocol": "tcp",
                         "port": "80"
                     }],
-                    "dnsNameLabel": "[variables('dnsNameLabel')]"
+                    "dnsNameLabel": "[parameters('dnsNameLabel')]"
                 }
             }
         }
@@ -260,11 +264,7 @@
     "outputs": {
         "fqdn": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', variables('dnsNameLabel'))).ipAddress.fqdn]"
-        },
-        "FunctionAppName": {
-            "type": "string",
-            "value": "[variables('functionAppName')]"
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('dnsNameLabel'))).ipAddress.fqdn]"
         }
     }
 }
