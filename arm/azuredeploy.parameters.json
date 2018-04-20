@@ -15,10 +15,10 @@
             "value": "hubertsui/web-server"
         },
         "functionAppName": {
-            "type": "acidemofunctionapp"
+            "value": "acidemofunctionapp"
         },
         "dnsNameLabel": {
-            "type": "acidemowebserver"
+            "value": "acidemowebserver"
         }
     }
   }
