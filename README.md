@@ -8,51 +8,16 @@
 
 3. Spawner-functions: This consists of two functions. One is watching a queue to create aci instances and another is watching a queue to delete aci instances. 
 
-## Setup Docker Images
-
-Follow the steps below if you want to build your own docker images.
-
-1. Setup `web-server` image
-   - Build image.
-     ```console
-     cd web-server
-     docker build -t <dockerid>/web-server:latest .
-     ```
-   - Push image to Docker Hub.
-     ```console
-     docker push <dockerid>/web-server:latest
-     ```
-   - Open the file [azuredeploy.parameters.json](arm/azuredeploy.parameters.json) in `arm` folder, and update the value of the parameter `webServerImage` to point to the new image.
-     ```javascript
-     "webServerImage": {
-         "value": "<dockerid>/web-server"
-     }
-     ```
-
-1. Setup `go-worker` image
-   - Build image
-     ```console
-     cd ../go-worker
-     docker build -t <dockerid>/go-worker:latest .
-     ```
-   - Upload image to repository
-     ```console
-     docker push <dockerid>/go-worker:latest
-     ```
-   - Open the file [index.js](spawner-functions/sbqTriggerCreateWorkerContainer/index.js) in `spawner-functions/sbqTriggerCreateWorkerContainer` folder, and update this line to point to the new image.
-     ```javascript
-     const IMAGE = "<dockerid>/go-worker:latest";
-     ```
-
 ## Deployment Steps
 
-1. Clone the repo.
+1. Open and login to [Azure Cloud Shell](https://shell.azure.com).
+
+2. Clone the repo.
    ```console
    git clone https://github.com/Azure-Samples/aci-event-driven-worker-queue.git
 
    cd aci-event-driven-worker-queue
    ```
-2. Open and login to [Azure Cloud Shell](shell.azure.com).
 
 3. Create resource group.
    ```console
@@ -99,8 +64,7 @@ Follow the steps below if you want to build your own docker images.
     ```
 8. Compress the files inside the `spawner-functions` folder as a .zip file.
    ```console
-   cd ..
-   zip -r spawner-functions-compressed.zip spawner-functions
+   zip -r spawner-functions-compressed.zip .
    ```
 
 9. Deploy the .zip file to Azure Functions.
@@ -109,6 +73,41 @@ Follow the steps below if you want to build your own docker images.
    ```
    > Note: The `<function-app-name>` is the `functionAppName` parameter you used for ARM template deployment previously.
 
+## Setup Docker Images (Optional)
+
+Follow the steps below if you want to build your own docker images.
+
+1. Setup `web-server` image
+   - Build image.
+     ```console
+     cd web-server
+     docker build -t <dockerid>/web-server:latest .
+     ```
+   - Push image to Docker Hub.
+     ```console
+     docker push <dockerid>/web-server:latest
+     ```
+   - Open the file [azuredeploy.parameters.json](arm/azuredeploy.parameters.json) in `arm` folder, and update the value of the parameter `webServerImage` to point to the new image.
+     ```javascript
+     "webServerImage": {
+         "value": "<dockerid>/web-server"
+     }
+     ```
+
+1. Setup `go-worker` image
+   - Build image
+     ```console
+     cd ../go-worker
+     docker build -t <dockerid>/go-worker:latest .
+     ```
+   - Upload image to repository
+     ```console
+     docker push <dockerid>/go-worker:latest
+     ```
+   - Open the file [index.js](spawner-functions/sbqTriggerCreateWorkerContainer/index.js) in `spawner-functions/sbqTriggerCreateWorkerContainer` folder, and update this line to point to the new image.
+     ```javascript
+     const IMAGE = "<dockerid>/go-worker:latest";
+     ```
 
 ## Known Issues
 
