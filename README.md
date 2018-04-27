@@ -29,55 +29,63 @@ author: juluk
 
 3. Create resource group.
    ```console
-    az group create -l westus -n aci-event-driven
+   az group create -l westus -n aci-event-driven
    ```
 
 4. Create a service principal.
    ```console
-    az ad sp create-for-rbac -n aci-event-driven --role contributor
-    ```
-    Output sample:
-    ```
-    {
-      "appId": "fb7c4111-2144-4489-8fd9-XXXXXXXXX",
-      "displayName": "aci-event-driven",
-      "name": "http://aci-event-driven",
-      "password": "0fa91eda-261e-47ad-bb65-XXXXXXXX",
-      "tenant": "3dad2b09-9e66-4eb8-9bef-XXXXXXX"
-    }
-    ```
+   az ad sp create-for-rbac -n aci-event-driven --role contributor
+   ```
+   Output sample:
+   ```
+   {
+     "appId": "fb7c4111-2144-4489-8fd9-XXXXXXXXX",
+     "displayName": "aci-event-driven",
+     "name": "http://aci-event-driven",
+     "password": "0fa91eda-261e-47ad-bb65-XXXXXXXX",
+     "tenant": "3dad2b09-9e66-4eb8-9bef-XXXXXXX"
+   }
+   ```
 
 5. Cd into the `arm` directory and update the `azuredeploy.parameters.json` in the folder `arm` with the service principal credential created above (appId, password, tenant), and assign an unique name for the parameters `functionAppName` and `dnsNameLabel` (for the website).
 
 6. Deploy the Azure resources with the ARM template. This will take a few minutes.
    ```console
-    az group deployment create --template-file azuredeploy.json --parameters @azuredeploy.parameters.json -g aci-event-driven
+   az group deployment create --template-file azuredeploy.json --parameters @azuredeploy.parameters.json -g aci-event-driven
    ```
-     Output sample
-    ```
-    "outputs": {
-      "fqdn": {
-        "type": "String",
-        "value": "web-servertmaalsmhtzqta.westus.azurecontainer.io"
-      }
-    }
-    ```
-    > Note: The output `fqdn` is the URL of the ACI dashboard.
+   Output sample
+   ```
+   "outputs": {
+     "fqdn": {
+       "type": "String",
+       "value": "web-servertmaalsmhtzqta.westus.azurecontainer.io"
+     }
+   }
+   ```
+   > Note: The output `fqdn` is the URL of the ACI dashboard.
 
 7. Download NPM packages.
    ```console
-    cd ../spawner-functions
+   cd ../spawner-functions
 
-    npm install
-    ```
+   npm install
+   ```
+
 8. Compress the files inside the `spawner-functions` folder as a .zip file.
    ```console
    zip -r spawner-functions-compressed.zip .
    ```
 
-9. Deploy the .zip file to Azure Functions.
+9. Set deployment credential if you don't have one or forget.
+   >Note: All function and web apps in the subscription will be impacted since they share the same deployment credentials.
+
    ```console
-    az functionapp deployment source config-zip  -g aci-event-driven -n <function-app-name> --src spawner-functions-compressed.zip
+   az webapp deployment user set --user-name <deployment-user-name> --password <deployment-user-password>
+   ```
+
+9. Deploy the .zip file to Azure Functions, and type in the deployment user password when prompted by cURL.
+   ```console
+   curl -X POST -u <deployment-user-name> --data-binary @"spawner-functions-compressed.zip" https://<function-app-name>.scm.azurewebsites.net/api/zipdeploy
    ```
    > Note: The `<function-app-name>` is the `functionAppName` parameter you used for ARM template deployment previously.
 
@@ -116,10 +124,3 @@ Follow the steps below if you want to build your own docker images.
      ```javascript
      const IMAGE = "<dockerid>/go-worker:latest";
      ```
-
-## Known Issues
-
-1. During the .zip deployment for the Azure function, the error **Connection aborted** might occur sometimes, to workaround that, you could run the command below, and then re-deploy the Azure function minutes later when the function app is started.
-   ```console
-   az functionapp restart -g aci-event-driven -n <function-app-name>
-   ```
