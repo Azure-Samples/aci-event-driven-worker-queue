@@ -1,3 +1,9 @@
+---
+services: containerinstances
+platforms: azure
+author: juluk
+---
+
 # ACI Event Driven Worker Queue
 
 ## Components
