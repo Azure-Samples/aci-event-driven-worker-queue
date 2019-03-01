@@ -1,7 +1,7 @@
 ---
 services: containerinstances
 platforms: azure
-author: juluk
+author: dekapur
 ---
 
 # ACI Event Driven Worker Queue
