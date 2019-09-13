@@ -1,7 +1,14 @@
 ---
-services: containerinstances
-platforms: azure
-author: dekapur
+page_type: sample
+languages:
+- html
+- python
+- javascript
+- go
+products:
+- azure
+description: "web-server: This is the host for the dashboard and the api. The dashboard will let you add work to the queue. When work is added a yellow pending container will show up."
+urlFragment: aci-event-driven-worker-queue
 ---
 
 # ACI Event Driven Worker Queue
