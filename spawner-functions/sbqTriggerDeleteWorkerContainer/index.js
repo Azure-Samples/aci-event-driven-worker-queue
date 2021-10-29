@@ -1,8 +1,8 @@
 'use strict'
 
 var msRestAzure = require("ms-rest-azure");
-var resourceManagement = require('azure-arm-resource');
-var containerInstance = require('azure-arm-containerinstance');
+var resourceManagement = require('@azure/arm-resources');
+var containerInstance = require('@azure/arm-containerinstance');
 
 var clientId = process.env.client_id,
     secret = process.env.client_secret,
