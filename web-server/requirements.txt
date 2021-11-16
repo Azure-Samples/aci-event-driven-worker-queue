@@ -1,4 +1,4 @@
-azure-common==1.1.8
+azure-common==1.1.27
 azure.servicebus
 azure.mgmt.monitor
 flask

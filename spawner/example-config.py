@@ -1,4 +1,4 @@
-from azure.common.credentials import ServicePrincipalCredentials
+from azure.identity import DefaultAzureCredential
 
 class AzureContext(object):
    """Azure Security Context. 
@@ -8,20 +8,13 @@ class AzureContext(object):
       See README for information on how to obtain a service principal attributes client id, secret, etc. for Azure
    """
    
-   def __init__(self, subscription_id, client_id, client_secret, tenant):
-      self.credentials = ServicePrincipalCredentials(
-         client_id = client_id,
-         secret = client_secret,
-         tenant = tenant
-      )
+   def __init__(self, subscription_id):
+      self.credentials = DefaultAzureCredential()
       self.subscription_id = subscription_id
 
 
 azure_context = AzureContext(
-      subscription_id = '<subId>',
-      client_id = 'service_principle_key',
-      client_secret = 'service_principle_key',
-      tenant = ''
+      subscription_id = '<subId>'
    )
 
 #ACI Specific configurations
@@ -35,8 +28,6 @@ ACI_CONFIG = {
 DATABASE_URI = ""
 
 queueConf = {
-      'service_namespace': '',
-      'saskey_name': '',
-      'saskey_value': '',
-      'queue_name': ''
+      'queue_name': '',
+      'connstr': ''
 }

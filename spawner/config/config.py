@@ -21,7 +21,8 @@ azure_context = AzureContext(
 #ACI Specific configurations
 ACI_CONFIG = {
     "subscriptionId": os.getenv("AZURE_SUBSCRIPTION_ID"),
-    "resourceGroup": os.getenv("AZURE_RESOURCE_GROUP")
+    "resourceGroup": os.getenv("AZURE_RESOURCE_GROUP"),
+    "location": os.getenv("AZURE_LOCATION")
 }
 
 #CosmosMongoDb without the ssl

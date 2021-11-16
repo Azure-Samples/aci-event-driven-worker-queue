@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 from config.config import queueConf, DATABASE_URI, ACI_CONFIG, azure_context
-from azure.servicebus import ServiceBusService, Message, Queue
+from azure.servicebus import ServiceBusClient, ServiceBusMessage
 from azure.mgmt.monitor import MonitorManagementClient
 from flask import Flask, render_template, request, Response
 import json
-import sys
 from pymongo import MongoClient
 from bson.json_util import dumps
 import requests
@@ -21,10 +20,7 @@ import traceback
 monitor_client = MonitorManagementClient(azure_context.credentials, azure_context.subscription_id)
 
 #set up the service bus queue
-bus_service = ServiceBusService(
-    service_namespace = queueConf['service_namespace'],
-    shared_access_key_name = queueConf['saskey_name'],
-    shared_access_key_value = queueConf['saskey_value'])
+servicebus_client = ServiceBusClient.from_connection_string(conn_str=queueConf['connstr'])
 
 #Connect to the databases
 client = MongoClient(DATABASE_URI + "&ssl=true")
@@ -50,14 +46,15 @@ def sendwork():
     work = request.get_json()['work']
     name = _getRandomName()
 
-    db.containerstate.insert({"name":name, "state":"Pending"})
+    db.containerstate.insert_one({"name":name, "state":"Pending"})
 
     print("Creating job with work: ", work)
 
     try:
-        bus_service.send_queue_message(queueConf['queue_name'], Message({"name":name,"input":work}))
-    except Exception, e:
-        db.containerstate.update({"name":name},{"$set":{"state":"Error","message":traceback.format_exc()}})
+        sender = servicebus_client.get_queue_sender(queue_name=queueConf['queue_name'])
+        sender.send_messages(ServiceBusMessage(name=name,body=work))
+    except:
+        db.containerstate.update_one({"name":name},{"$set":{"state":"Error","message":traceback.format_exc()}})
     
     return SUCCESS
 
@@ -81,8 +78,9 @@ def clear():
     container_names = db.containerstate.find({})
     for item in container_names:
         key = item['name']
-        if(not(dict.has_key(key))):
-            bus_service.send_queue_message(queueConf['delete_queue_name'], Message(key))
+        if key not in dict:
+            sender = servicebus_client.get_queue_sender(queue_name=queueConf['delete_queue_name'])
+            sender.send_messages(ServiceBusMessage(key))
             dict[key] = True
     db.containerstate.delete_many({})
     return SUCCESS
