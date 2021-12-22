@@ -56,7 +56,6 @@ def sendwork():
         value_body = {b"name": name, "body": work}
         value_message = AmqpAnnotatedMessage(value_body=value_body)
         sender.send_messages(value_message)
-        # sender.send_messages(ServiceBusMessage(name=name,body=work))
     except:
         db.containerstate.update_one({"name":name},{"$set":{"state":"Error","message":traceback.format_exc()}})
     
