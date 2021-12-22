@@ -5,7 +5,7 @@ import string
 import sys
 from collections import deque
 from config.config import queueConf, azure_context, DATABASE_URI, ACI_CONFIG
-from azure.servicebus import ServiceBusClient
+from azure.servicebus import ServiceBusClient, ServiceBusReceiveMode
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ContainerPort, Port, IpAddress, EnvironmentVariable,
@@ -28,7 +28,7 @@ def main():
     sys.stdout.flush()
     while True:
         try:
-            receiver = servicebus_client.get_queue_receiver(queueConf['queue_name'], receive_mode='peeklock')
+            receiver = servicebus_client.get_queue_receiver(queueConf['queue_name'], receive_mode=ServiceBusReceiveMode.RECEIVE_AND_DELETE)
             received_msgs = receiver.receive_messages()
             for msg in received_msgs:
                 work = str(b''.join(msg.body), encoding='utf-8')

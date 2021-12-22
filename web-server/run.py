@@ -2,6 +2,7 @@
 
 from config.config import queueConf, DATABASE_URI, ACI_CONFIG, azure_context
 from azure.servicebus import ServiceBusClient, ServiceBusMessage
+from azure.servicebus.amqp import AmqpAnnotatedMessage
 from azure.mgmt.monitor import MonitorManagementClient
 from flask import Flask, render_template, request, Response
 import json
@@ -52,7 +53,10 @@ def sendwork():
 
     try:
         sender = servicebus_client.get_queue_sender(queue_name=queueConf['queue_name'])
-        sender.send_messages(ServiceBusMessage(name=name,body=work))
+        value_body = {b"name": name, "body": work}
+        value_message = AmqpAnnotatedMessage(value_body=value_body)
+        sender.send_messages(value_message)
+        # sender.send_messages(ServiceBusMessage(name=name,body=work))
     except:
         db.containerstate.update_one({"name":name},{"$set":{"state":"Error","message":traceback.format_exc()}})
     
