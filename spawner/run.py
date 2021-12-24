@@ -29,16 +29,14 @@ def main():
     while True:
         try:
             receiver = servicebus_client.get_queue_receiver(queueConf['queue_name'], receive_mode=ServiceBusReceiveMode.RECEIVE_AND_DELETE)
-            received_msgs = receiver.receive_messages()
-            for msg in received_msgs:
-                work = str(b''.join(msg.body), encoding='utf-8')
-
+            for message in receiver:
+                raw_amqp_message = message.raw_amqp_message
+                work = raw_amqp_message.body
                 container_name = get_container_name()
                 env_vars = create_env_vars(work, DATABASE_URI, container_name)
                 sys.stdout.write("Creating container: " + container_name + " with work: " + work + '\n')  # same as print
                 sys.stdout.flush()
                 create_container_group(ACI_CONFIG['resourceGroup'], container_name, ACI_CONFIG['location'], IMAGE, env_vars)
-                
         except KeyboardInterrupt:
             pass
 
