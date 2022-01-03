@@ -5,7 +5,7 @@ import string
 import sys
 from collections import deque
 from config.config import queueConf, azure_context, DATABASE_URI, ACI_CONFIG
-from azure.servicebus import ServiceBusService, Message, Queue
+from azure.servicebus import ServiceBusClient, ServiceBusReceiveMode
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 from azure.mgmt.containerinstance.models import (ContainerGroup, Container, ContainerPort, Port, IpAddress, EnvironmentVariable,
@@ -15,11 +15,7 @@ resource_client = ResourceManagementClient(azure_context.credentials, azure_cont
 client = ContainerInstanceManagementClient(azure_context.credentials, azure_context.subscription_id)
 
 
-bus_service = ServiceBusService(
-    service_namespace = queueConf['service_namespace'],
-    shared_access_key_name = queueConf['saskey_name'],
-    shared_access_key_value = queueConf['saskey_value'])
-
+servicebus_client = ServiceBusClient.from_connection_string(conn_str=queueConf['connstr'])
 
 
 BASE_NAMES = deque(["anders", "wenjun", "robbie", "robin", "allen", "tony", "xiaofeng", "tingting", "harry", "chen"])
@@ -32,16 +28,16 @@ def main():
     sys.stdout.flush()
     while True:
         try:
-            msg = bus_service.receive_queue_message(queueConf['queue_name'], peek_lock=False)
-            if msg.body is not None:
-                work = msg.body.decode("utf-8")
-
+            receiver = servicebus_client.get_queue_receiver(queueConf['queue_name'], receive_mode=ServiceBusReceiveMode.RECEIVE_AND_DELETE)
+            for message in receiver:
+                raw_amqp_message = message.raw_amqp_message
+                work = raw_amqp_message.body
                 container_name = get_container_name()
                 env_vars = create_env_vars(work, DATABASE_URI, container_name)
                 sys.stdout.write("Creating container: " + container_name + " with work: " + work + '\n')  # same as print
                 sys.stdout.flush()
                 create_container_group(ACI_CONFIG['resourceGroup'], container_name, ACI_CONFIG['location'], IMAGE, env_vars)
-                
+        
         except KeyboardInterrupt:
             pass
 
@@ -81,7 +77,7 @@ def create_container_group(resource_group_name, name, location, image, env_vars)
 
     # defaults for container group
     cgroup_os_type = OperatingSystemTypes.linux
-    cgroup_ip_address = IpAddress(ports = [Port(protocol=ContainerGroupNetworkProtocol.tcp, port = port)])
+    cgroup_ip_address = IpAddress(ports = [Port(protocol=ContainerGroupNetworkProtocol.tcp, port = port)], type="Public")
     image_registry_credentials = None
 
     cgroup = ContainerGroup(location = location,
@@ -90,7 +86,7 @@ def create_container_group(resource_group_name, name, location, image, env_vars)
                         ip_address = cgroup_ip_address,
                         image_registry_credentials = image_registry_credentials)
 
-    client.container_groups.create_or_update(resource_group_name, name, cgroup)
+    client.container_groups.begin_create_or_update(resource_group_name, name, cgroup)
 
 
 if __name__ == '__main__':

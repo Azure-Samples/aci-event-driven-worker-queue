@@ -1,4 +1,5 @@
 from azure.identity import DefaultAzureCredential
+import os
 
 class AzureContext(object):
    """Azure Security Context. 
@@ -14,23 +15,23 @@ class AzureContext(object):
       self.credentials = DefaultAzureCredential()
       self.subscription_id = subscription_id
 
-#Service Principle Creds for ACI
+
 azure_context = AzureContext(
-      subscription_id = ''
+      subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
    )
 
 #ACI Specific configurations
 ACI_CONFIG = {
-    "subscriptionId": "",
-    "resourceGroup": "",
-    "location": ""
+    "subscriptionId": os.getenv("AZURE_SUBSCRIPTION_ID"),
+    "resourceGroup": os.getenv("AZURE_RESOURCE_GROUP"),
+    "location": os.getenv("AZURE_LOCATION")
 }
 
-#Cosmosdb mongodb api connection string
-DATABASE_URI = "" 
+#CosmosMongoDb without the ssl
+DATABASE_URI = os.getenv("COSMOS_CONNECTION_STRING")
 
-#Service Bus Queue Config
 queueConf = {
-      'queue_name': '',
-      'connstr': ''
+      'queue_name': os.getenv("SERVICE_BUS_CREATE_QUEUE"),
+      'delete_queue_name': os.getenv("SERVICE_BUS_DELETE_QUEUE"),
+      'connstr': os.getenv('SERVICE_BUS_CONNECTION_STR')
 }
