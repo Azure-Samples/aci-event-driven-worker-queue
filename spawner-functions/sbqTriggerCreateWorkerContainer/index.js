@@ -1,8 +1,7 @@
 'use strict'
 
-var msRestAzure = require("ms-rest-azure");
-var resourceManagement = require('azure-arm-resource');
-var containerInstance = require('azure-arm-containerinstance');
+var { ClientSecretCredential } = require("@azure/identity");
+var { ContainerInstanceManagementClient } = require("@azure/arm-containerinstance");
 
 var clientId = process.env.client_id,
     secret = process.env.client_secret,
@@ -36,11 +35,11 @@ module.exports = function(context, mySbMsg) {
     }
 
     context.log('JavaScript ServiceBus queue trigger function processed message', mySbMsg);
-
-    msRestAzure.loginWithServicePrincipalSecret(clientId, secret, domain, function(err, credentials) {
+    try{
         context.log.info("got credentials");
+        const credentials = new ClientSecretCredential(domain,clientId,secret);
 
-        let client = new containerInstance.ContainerInstanceManagementClient(credentials,subscriptionId);
+        let client = new ContainerInstanceManagementClient(credentials,subscriptionId);
         let containerName =  sbMsgObj.name;
         let containerMsg = sbMsgObj.input;
 
@@ -84,7 +83,7 @@ module.exports = function(context, mySbMsg) {
         };
 
         context.log.info("creating container");
-        client.containerGroups.createOrUpdate(resourceGroupName, containerName, containerGroup)
+        client.containerGroups.beginCreateOrUpdateAndWait(resourceGroupName, containerName, containerGroup)
             .then( (cgroup) => {
                 context.log(cgroup);
                 context.done();
@@ -110,6 +109,8 @@ module.exports = function(context, mySbMsg) {
                     })
                 });
             });
+    }catch(err){
+        console.log(err);
+    }
 
-    });
 };

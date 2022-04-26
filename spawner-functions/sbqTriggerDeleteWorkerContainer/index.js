@@ -1,8 +1,7 @@
 'use strict'
 
-var msRestAzure = require("ms-rest-azure");
-var resourceManagement = require('azure-arm-resource');
-var containerInstance = require('azure-arm-containerinstance');
+var { ClientSecretCredential } = require("@azure/identity");
+var { ContainerInstanceManagementClient } = require("@azure/arm-containerinstance");
 
 var clientId = process.env.client_id,
     secret = process.env.client_secret,
@@ -12,19 +11,17 @@ var clientId = process.env.client_id,
 
 module.exports = function(context, mySbMsg) {
     context.log('JavaScript ServiceBus queue trigger function processed message', mySbMsg);
-    
-    msRestAzure.loginWithServicePrincipalSecret(clientId, secret, domain, function(err, credentials) {
-        let client = new containerInstance.ContainerInstanceManagementClient(credentials,subscriptionId);
-        let containerGroupName = mySbMsg;
+    const credentials = new ClientSecretCredential(domain,clientId,secret);
+    let client = new ContainerInstanceManagementClient(credentials,subscriptionId);
+    let containerGroupName = mySbMsg;
 
-        client.containerGroups.deleteMethod(resourceGroupName, containerGroupName)
-            .then( (cgroup) => {
-                context.log(cgroup)
-            }).catch((err) => {
-                context.log(err);
-                return;
-            });
-    });
+    client.containerGroups.beginDeleteAndWait(resourceGroupName,containerGroupName)
+        .then( (cgroup) => {
+            context.log(cgroup)
+        }).catch((err) => {
+            context.log(err);
+            return;
+        });
 
     context.done();
 };
